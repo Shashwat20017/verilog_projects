@@ -37,3 +37,63 @@ always@(posedge clk or negedge reset) begin
     end
 end
 endmodule
+
+module tb_pwd;
+reg clk, pulse_in, reset;
+wire [3:0] pulse_width;
+wire valid;
+
+pulse_width_detector DUT(.clk(clk), .pulse_in(pulse_in), .reset(reset), .pulse_width(pulse_width), .valid(valid));
+
+always #5 clk=~clk;
+
+initial begin
+
+    $monitor("time=%0t reset=%b pulse_in=%b pulse_width=%d valid=%b",
+         $time, reset, pulse_in, pulse_width, valid);
+end
+
+initial begin
+    $display("----------------simulation starts------------------");
+    clk=0;
+    reset=0;
+    pulse_in=0;
+
+    #10; reset=1;
+
+    //test_1
+    #10;
+    pulse_in=1;
+    #40;
+    pulse_in=0;
+  
+  	@(posedge clk);
+	#1;
+
+  	if(pulse_width==4'd4)begin
+        $display("test 1 passed");
+    end
+    else begin
+        $display("test 1 failed");
+    end
+    
+    //test_2
+    #30;
+    pulse_in=1;
+    #70;
+    pulse_in=0;
+  	
+    @(posedge clk);
+  	#1;
+
+  	if(pulse_width==4'd7)begin
+        $display("test 1 passed");
+    end
+    else begin
+        $display("test 1 failed");
+    end
+    #20;
+    $finish;
+
+end
+endmodule
