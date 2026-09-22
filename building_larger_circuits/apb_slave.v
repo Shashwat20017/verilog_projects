@@ -7,7 +7,7 @@ module apb_slave (
     input [7:0]  PADDR,
     input [31:0] PWDATA,
     output reg [31:0] PRDATA,
-    output reg       PREADY,
+    output       PREADY,
     output reg       PSLVERR
 );
 
@@ -22,7 +22,6 @@ localparam IDLE =2'b00,
            SETUP =2'b01,
            ACCESS =2'b10;
 
-//next stsate logic
     always@(posedge PCLK or negedge PRESETn) begin
 
       if(!PRESETn) begin
@@ -52,76 +51,87 @@ localparam IDLE =2'b00,
         if(PENABLE) begin
           next_state=ACCESS;
 
-      end 
+        end 
         else begin
           next_state=SETUP;
         end
       end
 
       ACCESS: begin
-        PREADY=1;
         if(PSEL) begin
           next_state=SETUP;
         end
         else begin
           next_state=IDLE;
         end
-
-        case(PADDR)
-        8'h00, 8'h04, 8'h08, 8'h0c: PSLVERR=0;
-        default: PSLVERR=1;
-        endcase
-      end
-      
+      end 
 
       default: begin
         next_state=IDLE;
         end 
-      end
      endcase   
+     
+     if(next_state == ACCESS) begin
+    case(PADDR)
+        8'h00, 8'h04, 8'h08, 8'h0c:
+            PSLVERR = 0;
+
+        default:
+            PSLVERR = 1;
+    endcase
+end
     end
+
+    assign PREADY=(PSEL && PENABLE);
 
     always@(posedge PCLK or negedge PRESETn) begin
       if(!PRESETn) begin
-           reg0<=0; 
-           reg1<=0;
-           reg2<=0;
-           reg3<=0;
+          PRDATA<=0;
+          reg0<=0; 
+          reg1<=0;
+          reg2<=0;
+          reg3<=0;
       end
       else  begin
-        if(PENABLE && PSEL && PWRITE) begin
-          case(PADDR)
-          8'h00: begin 
-            reg0<=PWDATA;
-            end
-          8'h04:begin
-            reg1<=PWDATA;
-             end
-          8'h08: begin 
-            reg2<=PWDATA;
-             end
-          8'h0c: begin
-            reg3<=PWDATA;
-             end
-          endcase
-      end
-      else if(PENABLE && PSEL && !PWRITE) begin // read logic
-          PRDATA<=0;
-          case(PADDR)
-          8'h00: begin 
-            PRDATA<=reg0;
-             end
-          8'h04:begin
-            PRDATA<=reg1;
-             end
-          8'h08: begin 
-            PRDATA<=reg2;
-             end
-          8'h0c: begin
-            PRDATA<=reg3;
-             end
-          default: PRDATA<=0;
-          endcase
+        if(next_state == ACCESS && PWRITE) begin
+  
+            case(PADDR)
+            8'h00: begin 
+              reg0<=PWDATA;
+              end
+            8'h04:begin
+              reg1<=PWDATA;
+              end
+            8'h08: begin 
+              reg2<=PWDATA;
+              end
+            8'h0c: begin
+              reg3<=PWDATA;
+              end
+            endcase
+        end
+        
+
+      else if(next_state == ACCESS && !PWRITE) begin
+            PRDATA<=0;
+            case(PADDR)
+            8'h00: begin 
+              PRDATA<=reg0;
+              end
+            8'h04:begin
+              PRDATA<=reg1;
+              end
+            8'h08: begin 
+              PRDATA<=reg2;
+              end
+            8'h0c: begin
+              PRDATA<=reg3;
+              end
+            default: PRDATA<=0;
+            endcase
+          end
+      
+    end
     end
     
 
