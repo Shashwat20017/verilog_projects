@@ -7,8 +7,8 @@ module apb_slave (
     input [7:0]  PADDR,
     input [31:0] PWDATA,
     output reg [31:0] PRDATA,
-    output       PREADY,
-    output reg       PSLVERR
+    output reg        PREADY,
+    output reg        PSLVERR
 );
 
 reg [31:0] reg0, //0x00
@@ -70,20 +70,20 @@ localparam IDLE =2'b00,
         next_state=IDLE;
         end 
      endcase   
-     
-     if(next_state == ACCESS) begin
-    case(PADDR)
-        8'h00, 8'h04, 8'h08, 8'h0c:
-            PSLVERR = 0;
 
-        default:
-            PSLVERR = 1;
-    endcase
-end
+     if(next_state == ACCESS) begin
+      PREADY=1;
+      case(PADDR)
+          8'h00, 8'h04, 8'h08, 8'h0c:
+              PSLVERR = 0;
+
+          default:
+              PSLVERR = 1;
+      endcase
+      end
     end
 
-    assign PREADY=(PSEL && PENABLE);
-
+    
     always@(posedge PCLK or negedge PRESETn) begin
       if(!PRESETn) begin
           PRDATA<=0;
